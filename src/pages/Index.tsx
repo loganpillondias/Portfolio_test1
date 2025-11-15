@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Github, Linkedin, Mail, Download, ExternalLink, Send, Sparkles } from "lucide-react";
+import { Github, Linkedin, Mail, Download, ExternalLink, Send, Sparkles, MessageCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -83,18 +84,23 @@ const Index = () => {
     setAiResponse("");
     
     try {
-      // TODO: Integrate Gemini API here
-      // The edge function will receive the question and return a response
-      // based on the portfolio information
-      
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
-      
-      setAiResponse("Esta é uma resposta simulada. A integração com a API Gemini será implementada em breve para fornecer respostas personalizadas sobre meu portfólio e experiência.");
-      setAiQuestion("");
-    } catch (error) {
+      const { data, error } = await supabase.functions.invoke('ai-assistant', {
+        body: { question: aiQuestion }
+      });
+
+      if (error) throw error;
+
+      if (data?.answer) {
+        setAiResponse(data.answer);
+        setAiQuestion("");
+      } else {
+        throw new Error("Resposta inválida do servidor");
+      }
+    } catch (error: any) {
+      console.error("Erro ao processar pergunta:", error);
       toast({
         title: "Erro ao processar pergunta",
-        description: "Por favor, tente novamente.",
+        description: error.message || "Por favor, tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -107,7 +113,7 @@ const Index = () => {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gradient">LP</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-gradient">Logan Pillon Dias | Desenvolvedor</h1>
           <div className="hidden md:flex gap-6">
             <a href="#sobre" className="hover:text-primary transition-colors">Sobre</a>
             <a href="#habilidades" className="hover:text-primary transition-colors">Habilidades</a>
@@ -384,6 +390,17 @@ const Index = () => {
           </p>
         </div>
       </footer>
+
+      {/* WhatsApp Button */}
+      <a
+        href="https://wa.me/5511999999999"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-full p-4 shadow-lg transition-all hover:scale-110 glow-border"
+        aria-label="Contato via WhatsApp"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </a>
     </div>
   );
 };
